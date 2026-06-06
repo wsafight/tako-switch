@@ -122,3 +122,58 @@ pub async fn migration_import_tako_cli() -> Result<String, String> {
     mark_done("tako-cli");
     Ok(api_key)
 }
+
+#[derive(Serialize, Default)]
+pub struct TakoLoginResult {
+    pub ok: bool,
+    pub name: Option<String>,
+    pub plan: Option<String>,
+    pub error: Option<String>,
+}
+
+/// Validate a Tako `cr_` key against par's identity endpoint. Used by the
+/// login screen (user pastes a key). The public gateway is used since the
+/// desktop app runs on end-user machines, not inside the mesh.
+#[tauri::command]
+pub async fn tako_login(apiKey: String) -> Result<TakoLoginResult, String> {
+    let url = "https://tako.shiroha.tech/apiStats/api/verify-identity";
+    let client = reqwest::Client::new();
+    let resp = client
+        .post(url)
+        .json(&serde_json::json!({ "apiKey": apiKey }))
+        .send()
+        .await
+        .map_err(|e| format!("Network error: {e}"))?;
+
+    let json: serde_json::Value = resp
+        .json()
+        .await
+        .map_err(|e| format!("Bad response: {e}"))?;
+
+    if json.get("success").and_then(|v| v.as_bool()) == Some(true) {
+        let user = json.get("user");
+        Ok(TakoLoginResult {
+            ok: true,
+            name: user
+                .and_then(|u| u.get("name"))
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            plan: user
+                .and_then(|u| u.get("plan"))
+                .and_then(|p| p.get("name"))
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            error: None,
+        })
+    } else {
+        Ok(TakoLoginResult {
+            ok: false,
+            error: json
+                .get("error")
+                .and_then(|v| v.as_str())
+                .map(String::from)
+                .or(Some("Invalid key".into())),
+            ..Default::default()
+        })
+    }
+}

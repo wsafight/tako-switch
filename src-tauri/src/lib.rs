@@ -1138,6 +1138,7 @@ pub fn run() {
             commands::migration_detect,
             commands::migration_import_ccswitch,
             commands::migration_import_tako_cli,
+            commands::tako_login,
             commands::get_providers,
             commands::get_current_provider,
             commands::add_provider,
