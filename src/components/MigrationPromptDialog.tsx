@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Download } from "lucide-react";
 import {
   Dialog,
@@ -18,17 +19,20 @@ import {
 import { toast } from "sonner";
 
 export function MigrationPromptDialog() {
+  const { t } = useTranslation();
   const [detect, setDetect] = useState<MigrationDetect | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [importing, setImporting] = useState(false);
 
   useEffect(() => {
-    migrationDetect().then((d) => {
-      if (d.ccswitch_available || d.tako_cli_available) {
-        setDetect(d);
-        setIsOpen(true);
-      }
-    }).catch(console.error);
+    migrationDetect()
+      .then((d) => {
+        if (d.ccswitch_available || d.tako_cli_available) {
+          setDetect(d);
+          setIsOpen(true);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleImport = async () => {
@@ -37,15 +41,15 @@ export function MigrationPromptDialog() {
     try {
       if (detect.ccswitch_available) {
         await migrationImportCcswitch();
-        toast.success("CC Switch data imported successfully");
+        toast.success(t("migration.ccImported"));
       }
       if (detect.tako_cli_available) {
         await migrationImportTakoCli();
-        toast.success("Tako account imported successfully");
+        toast.success(t("migration.takoImported"));
       }
       setIsOpen(false);
     } catch (e) {
-      toast.error(`Import failed: ${e}`);
+      toast.error(`${t("migration.importFailed")}: ${e}`);
     } finally {
       setImporting(false);
     }
@@ -59,23 +63,28 @@ export function MigrationPromptDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
-            Import detected data
+            {t("migration.title")}
           </DialogTitle>
           <DialogDescription className="space-y-2 text-left">
-            {detect.ccswitch_available && (
-              <p>Detected <strong>CC Switch</strong> configuration — your existing providers and settings can be imported.</p>
-            )}
+            {detect.ccswitch_available && <p>{t("migration.ccswitch")}</p>}
             {detect.tako_cli_available && (
-              <p>Detected <strong>Tako</strong> account{detect.tako_account_id ? ` (${detect.tako_account_id})` : ""} — your login can be carried over.</p>
+              <p>
+                {t("migration.takoAccount")}
+                {detect.tako_account_id ? ` (${detect.tako_account_id})` : ""}
+              </p>
             )}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex gap-2 sm:justify-end">
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={importing}>
-            Skip
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            disabled={importing}
+          >
+            {t("migration.skip")}
           </Button>
           <Button onClick={handleImport} disabled={importing}>
-            {importing ? "Importing..." : "Import"}
+            {importing ? t("migration.importing") : t("migration.import")}
           </Button>
         </DialogFooter>
       </DialogContent>

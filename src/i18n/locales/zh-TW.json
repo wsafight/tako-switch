@@ -171,7 +171,8 @@
         "oauthHint": "Google 官方使用 OAuth 個人驗證，無需填寫 API Key。首次使用時會自動開啟瀏覽器進行登入。",
         "apiKeyPlaceholder": "請輸入 Gemini API Key"
       }
-    }
+    },
+    "launch": "啟動"
   },
   "claudeCode": {
     "needsRouting": "需要路由",
@@ -2213,10 +2214,15 @@
     "color": "圖示顏色"
   },
   "migration": {
-    "success": "設定遷移成功",
-    "skillsSuccess": "已自動匯入 {{count}} 個技能至統一管理",
-    "skillsFailed": "自動匯入技能失敗",
-    "skillsFailedDescription": "請開啟 Skills 頁面點擊「匯入現有」手動匯入（或重新啟動後再試）。"
+    "title": "偵測到可匯入的資料",
+    "ccswitch": "偵測到 CC Switch 設定 —— 可匯入你既有的供應商和設定。",
+    "takoAccount": "偵測到 Tako 帳號 —— 可沿用你的登入狀態。",
+    "skip": "略過",
+    "import": "匯入",
+    "importing": "匯入中...",
+    "ccImported": "CC Switch 資料已匯入",
+    "takoImported": "Tako 帳號已匯入",
+    "importFailed": "匯入失敗"
   },
   "agents": {
     "title": "Agent"

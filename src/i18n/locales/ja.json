@@ -171,7 +171,8 @@
         "oauthHint": "Google 公式は OAuth 個人認証を使用するため API Key は不要です。初回利用時にブラウザが開きます。",
         "apiKeyPlaceholder": "Gemini API Key を入力"
       }
-    }
+    },
+    "launch": "起動"
   },
   "claudeCode": {
     "needsRouting": "ルーティングが必要",
@@ -2267,10 +2268,15 @@
     "color": "アイコンカラー"
   },
   "migration": {
-    "success": "設定の移行が完了しました",
-    "skillsSuccess": "スキルを {{count}} 件、自動的に統合管理へインポートしました",
-    "skillsFailed": "スキルの自動インポートに失敗しました",
-    "skillsFailedDescription": "Skills 画面で「既存をインポート」をクリックして手動でインポートしてください（または再起動して再試行）。"
+    "title": "インポート可能なデータを検出",
+    "ccswitch": "CC Switch の設定を検出 —— 既存のプロバイダーと設定をインポートできます。",
+    "takoAccount": "Tako アカウントを検出 —— ログイン状態を引き継げます。",
+    "skip": "スキップ",
+    "import": "インポート",
+    "importing": "インポート中...",
+    "ccImported": "CC Switch データをインポートしました",
+    "takoImported": "Tako アカウントをインポートしました",
+    "importFailed": "インポート失敗"
   },
   "agents": {
     "title": "エージェント"

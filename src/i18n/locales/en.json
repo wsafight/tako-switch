@@ -171,7 +171,8 @@
         "oauthHint": "Google official uses OAuth personal authentication, no need to fill in API Key. The browser will automatically open for login on first use.",
         "apiKeyPlaceholder": "Enter Gemini API Key"
       }
-    }
+    },
+    "launch": "Launch"
   },
   "claudeCode": {
     "needsRouting": "Needs Routing",
@@ -2267,10 +2268,15 @@
     "color": "Icon Color"
   },
   "migration": {
-    "success": "Configuration migrated successfully",
-    "skillsSuccess": "Automatically imported {{count}} skill(s) into unified management",
-    "skillsFailed": "Failed to auto import skills",
-    "skillsFailedDescription": "Open the Skills page and click \"Import Existing\" to import manually (or restart and try again)."
+    "title": "Import detected data",
+    "ccswitch": "Detected CC Switch configuration — your existing providers and settings can be imported.",
+    "takoAccount": "Detected Tako account — your login can be carried over.",
+    "skip": "Skip",
+    "import": "Import",
+    "importing": "Importing...",
+    "ccImported": "CC Switch data imported",
+    "takoImported": "Tako account imported",
+    "importFailed": "Import failed"
   },
   "agents": {
     "title": "Agents"
