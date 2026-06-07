@@ -190,13 +190,19 @@ export function ProviderCard({
     return true;
   }, [provider.notes, displayUrl, fallbackUrlText]);
 
-  const usageEnabled = provider.meta?.usage_script?.enabled ?? false;
+  // The built-in Tako provider always shows its par-backed subscription usage,
+  // without needing a usage_script configured.
+  const isTakoBuiltin = provider.id === "tako-builtin";
+
+  const usageEnabled =
+    (provider.meta?.usage_script?.enabled ?? false) || isTakoBuiltin;
   const isOfficial = isOfficialProvider(provider, appId);
   const supportsOfficialSubscription =
     isOfficial && ["claude", "codex", "gemini"].includes(appId);
   const isOfficialSubscriptionUsage =
+    isTakoBuiltin ||
     provider.meta?.usage_script?.templateType ===
-    TEMPLATE_TYPES.OFFICIAL_SUBSCRIPTION;
+      TEMPLATE_TYPES.OFFICIAL_SUBSCRIPTION;
   const officialSubscriptionEnabled =
     supportsOfficialSubscription && usageEnabled && isOfficialSubscriptionUsage;
   const isOfficialBlockedByProxy =
