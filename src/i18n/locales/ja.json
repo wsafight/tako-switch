@@ -2813,6 +2813,7 @@
     "expired": "セッション期限切れ",
     "expiredHint": "{{tool}}コマンドを実行してログインを更新してください",
     "queryFailed": "クエリに失敗しました",
-    "refresh": "更新"
+    "refresh": "更新",
+    "daily": "本日"
   }
 }
