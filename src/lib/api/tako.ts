@@ -39,3 +39,15 @@ export async function migrationImportCcswitch(): Promise<boolean> {
 export async function migrationImportTakoCli(): Promise<string> {
   return invoke("migration_import_tako_cli");
 }
+
+export async function takoStatuslineStatus(): Promise<boolean> {
+  return invoke("tako_statusline_status");
+}
+
+export async function takoStatuslineEnable(): Promise<boolean> {
+  return invoke("tako_statusline_enable");
+}
+
+export async function takoStatuslineDisable(): Promise<boolean> {
+  return invoke("tako_statusline_disable");
+}

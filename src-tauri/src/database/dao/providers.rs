@@ -654,7 +654,17 @@ impl Database {
     /// 用独立 flag `tako_provider_seeded`，所以即使官方预设已 seed 过的老库也会补上。
     /// sort_index = -1000 保证排在所有官方/用户 provider 之前。
     pub fn init_tako_providers(&self) -> Result<usize, AppError> {
-        use crate::database::dao::providers_seed::TAKO_SEEDS;
+        use crate::database::dao::providers_seed::{TAKO_PROVIDER_ID, TAKO_SEEDS};
+
+        // Always keep the Tako provider's icon current, even on installs that
+        // were seeded before the octopus icon existed (idempotent backfill).
+        {
+            let conn = lock_conn!(self.conn);
+            let _ = conn.execute(
+                "UPDATE providers SET icon = 'tako', icon_color = '#F06858' WHERE id = ?1",
+                params![TAKO_PROVIDER_ID],
+            );
+        }
 
         if self.get_bool_flag("tako_provider_seeded").unwrap_or(false) {
             return Ok(0);

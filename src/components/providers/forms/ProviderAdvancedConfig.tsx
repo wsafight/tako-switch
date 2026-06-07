@@ -1,6 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronRight, FlaskConical, Coins } from "lucide-react";
+import { ChevronDown, ChevronRight, FlaskConical, Coins, Terminal } from "lucide-react";
+import {
+  takoStatuslineStatus,
+  takoStatuslineEnable,
+  takoStatuslineDisable,
+} from "@/lib/api/tako";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +32,8 @@ interface ProviderAdvancedConfigProps {
   pricingConfig: ProviderPricingConfig;
   onTestConfigChange: (config: ProviderTestConfig) => void;
   onPricingConfigChange: (config: ProviderPricingConfig) => void;
+  /** True when editing the built-in Tako provider — unlocks Tako-only options. */
+  isTako?: boolean;
 }
 
 export function ProviderAdvancedConfig({
@@ -34,6 +41,7 @@ export function ProviderAdvancedConfig({
   pricingConfig,
   onTestConfigChange,
   onPricingConfigChange,
+  isTako = false,
 }: ProviderAdvancedConfigProps) {
   const { t } = useTranslation();
   const [isTestConfigOpen, setIsTestConfigOpen] = useState(testConfig.enabled);
@@ -49,8 +57,49 @@ export function ProviderAdvancedConfig({
     setIsPricingConfigOpen(pricingConfig.enabled);
   }, [pricingConfig.enabled]);
 
+  // Tako-only: statusline injection state (reads ~/.claude/settings.json).
+  const [statuslineOn, setStatuslineOn] = useState(false);
+  useEffect(() => {
+    if (isTako) {
+      takoStatuslineStatus().then(setStatuslineOn).catch(() => {});
+    }
+  }, [isTako]);
+
+  const toggleStatusline = async (next: boolean) => {
+    try {
+      if (next) await takoStatuslineEnable();
+      else await takoStatuslineDisable();
+      setStatuslineOn(next);
+    } catch (e) {
+      console.error("[Tako] statusline toggle failed", e);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      {isTako && (
+        <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Terminal className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <Label className="text-sm">
+                  {t("providerAdvanced.takoStatusline.title", {
+                    defaultValue: "Tako 状态栏",
+                  })}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("providerAdvanced.takoStatusline.description", {
+                    defaultValue:
+                      "在 Claude Code 底部显示目录 / Git / 模型 / 上下文 / 配额",
+                  })}
+                </p>
+              </div>
+            </div>
+            <Switch checked={statuslineOn} onCheckedChange={toggleStatusline} />
+          </div>
+        </div>
+      )}
       <div className="rounded-lg border border-border/50 bg-muted/20">
         <button
           type="button"

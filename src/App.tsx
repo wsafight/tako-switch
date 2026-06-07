@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Provider, VisibleApps } from "@/types";
+import takoTitlebarIcon from "@/assets/icons/app-icon.png";
 import type { EnvConflict } from "@/types/env";
 import { useProvidersQuery, useSettingsQuery } from "@/lib/query";
 import {
@@ -1040,10 +1041,21 @@ function App() {
     >
       {(dragBarHeight > 0 || useAppWindowControls) && (
         <div
-          className="fixed top-0 left-0 right-0 z-[70] flex items-center justify-end px-2"
+          className="fixed top-0 left-0 right-0 z-[70] flex items-center justify-between px-2"
           data-tauri-drag-region
           style={{ WebkitAppRegion: "drag", height: dragBarHeight } as any}
         >
+          <div
+            className="flex items-center gap-2 pl-1"
+            style={{ WebkitAppRegion: "no-drag" } as any}
+          >
+            <img
+              src={takoTitlebarIcon}
+              alt="Tako Switch"
+              className="h-5 w-5 rounded"
+              draggable={false}
+            />
+          </div>
           {useAppWindowControls && (
             <div
               className="flex items-center gap-1"
