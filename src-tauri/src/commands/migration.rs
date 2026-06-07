@@ -316,6 +316,75 @@ pub async fn tako_usage(apiKey: String) -> Result<TakoUsage, String> {
     })
 }
 
+#[derive(Serialize, Default)]
+pub struct TakoModel {
+    pub id: String,
+    pub name: String,
+    pub provider: String,
+    /// 适用客户端（从厂商推断）：claude / codex / gemini。
+    pub clients: Vec<String>,
+}
+
+/// 从厂商名推断该模型适用的 Tako 客户端。
+fn clients_for_provider(provider: &str) -> Vec<String> {
+    let p = provider.to_lowercase();
+    let mut out = Vec::new();
+    if p.contains("anthropic") || p.contains("claude") {
+        out.push("claude".to_string());
+    }
+    if p.contains("openai") || p.contains("gpt") || p.contains("codex") {
+        out.push("codex".to_string());
+    }
+    if p.contains("google") || p.contains("gemini") {
+        out.push("gemini".to_string());
+    }
+    out
+}
+
+/// 列出 Tako 支持的模型（用 cr_ key 调网关 /v1/models，OpenAI 格式）。
+#[tauri::command]
+pub async fn tako_list_models(apiKey: String) -> Result<Vec<TakoModel>, String> {
+    let url = "https://tako.shiroha.tech/v1/models";
+    let client = reqwest::Client::new();
+    let resp: serde_json::Value = client
+        .get(url)
+        .bearer_auth(&apiKey)
+        .send()
+        .await
+        .map_err(|e| format!("network: {e}"))?
+        .json()
+        .await
+        .map_err(|e| format!("bad models response: {e}"))?;
+
+    let data = resp
+        .get("data")
+        .and_then(|v| v.as_array())
+        .ok_or("no model list in response")?;
+
+    Ok(parse_models(data))
+}
+
+/// 把 /v1/models 的 OpenAI 格式 data[] 解析成 TakoModel 列表。
+fn parse_models(data: &[serde_json::Value]) -> Vec<TakoModel> {
+    data.iter()
+        .filter_map(|m| {
+            let id = m.get("id").and_then(|v| v.as_str())?.to_string();
+            let provider = m
+                .get("owned_by")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let clients = clients_for_provider(&provider);
+            Some(TakoModel {
+                name: id.clone(),
+                clients,
+                id,
+                provider,
+            })
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -361,5 +430,28 @@ mod tests {
             gemini.settings_config["env"]["GEMINI_API_KEY"],
             "cr_secret123"
         );
+    }
+
+    #[test]
+    fn infers_clients_from_provider() {
+        assert_eq!(clients_for_provider("Anthropic"), vec!["claude"]);
+        assert_eq!(clients_for_provider("OpenAI"), vec!["codex"]);
+        assert_eq!(clients_for_provider("Google"), vec!["gemini"]);
+        assert!(clients_for_provider("Unknown").is_empty());
+    }
+
+    #[test]
+    fn parses_openai_models_payload() {
+        let data = serde_json::json!([
+            { "id": "claude-opus-4", "owned_by": "Anthropic", "object": "model" },
+            { "id": "gpt-5", "owned_by": "OpenAI" },
+            { "object": "model" }
+        ]);
+        let models = parse_models(data.as_array().unwrap());
+        assert_eq!(models.len(), 2, "skips entries without id");
+        assert_eq!(models[0].id, "claude-opus-4");
+        assert_eq!(models[0].name, "claude-opus-4");
+        assert_eq!(models[0].clients, vec!["claude"]);
+        assert_eq!(models[1].clients, vec!["codex"]);
     }
 }

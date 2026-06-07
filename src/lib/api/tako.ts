@@ -87,3 +87,16 @@ export async function takoLogin(apiKey: string): Promise<TakoLoginResult> {
 export async function takoApplyKey(apiKey: string): Promise<TakoLoginResult> {
   return invoke("tako_apply_key", { apiKey });
 }
+
+export interface TakoModel {
+  id: string;
+  name: string;
+  provider: string;
+  /** 适用客户端：claude / codex / gemini。 */
+  clients: string[];
+}
+
+/** List models Tako supports (via the gateway /v1/models, cr_ key auth). */
+export async function takoListModels(apiKey: string): Promise<TakoModel[]> {
+  return invoke("tako_list_models", { apiKey });
+}

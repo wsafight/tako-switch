@@ -7,14 +7,18 @@ import {
   Coins,
   Terminal,
   LogIn,
+  Boxes,
 } from "lucide-react";
 import {
   takoStatuslineStatus,
   takoStatuslineEnable,
   takoStatuslineDisable,
   takoApplyKey,
+  takoListModels,
+  type TakoModel,
 } from "@/lib/api/tako";
 import { startTakoLogin } from "@/lib/takoAuth";
+import { TakoModelsList } from "./TakoModelsList";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +48,8 @@ interface ProviderAdvancedConfigProps {
   onPricingConfigChange: (config: ProviderPricingConfig) => void;
   /** True when editing the built-in Tako provider — unlocks Tako-only options. */
   isTako?: boolean;
+  /** Current cr_ key (Tako provider only) — used to list supported models. */
+  takoApiKey?: string;
 }
 
 export function ProviderAdvancedConfig({
@@ -52,6 +58,7 @@ export function ProviderAdvancedConfig({
   onTestConfigChange,
   onPricingConfigChange,
   isTako = false,
+  takoApiKey = "",
 }: ProviderAdvancedConfigProps) {
   const { t } = useTranslation();
   const [isTestConfigOpen, setIsTestConfigOpen] = useState(testConfig.enabled);
@@ -121,6 +128,27 @@ export function ProviderAdvancedConfig({
       toast.error(String(e));
     } finally {
       setLoggingIn(false);
+    }
+  };
+
+  // Tako-only: 支持的模型展示（懒加载，展开时拉取）。
+  const [showModels, setShowModels] = useState(false);
+  const [models, setModels] = useState<TakoModel[] | null>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  const toggleModels = async () => {
+    const next = !showModels;
+    setShowModels(next);
+    if (next && models === null && takoApiKey.trim()) {
+      setModelsLoading(true);
+      try {
+        setModels(await takoListModels(takoApiKey.trim()));
+      } catch (e) {
+        toast.error(`获取模型失败：${e}`);
+        setModels([]);
+      } finally {
+        setModelsLoading(false);
+      }
     }
   };
 
@@ -209,6 +237,38 @@ export function ProviderAdvancedConfig({
             </div>
             <Switch checked={statuslineOn} onCheckedChange={toggleStatusline} />
           </div>
+        </div>
+      )}
+      {isTako && (
+        <div className="rounded-lg border border-border/50 bg-muted/20">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+            onClick={toggleModels}
+          >
+            <div className="flex items-center gap-3">
+              <Boxes className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium">
+                {t("providerAdvanced.takoModels.title", {
+                  defaultValue: "支持的模型",
+                })}
+              </span>
+            </div>
+            {showModels ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+          {showModels && (
+            <div className="border-t border-border/50 p-4">
+              <TakoModelsList
+                loading={modelsLoading}
+                models={models}
+                hasKey={!!takoApiKey.trim()}
+              />
+            </div>
+          )}
         </div>
       )}
       <div className="rounded-lg border border-border/50 bg-muted/20">

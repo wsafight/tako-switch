@@ -1185,6 +1185,7 @@ pub fn run() {
             commands::migration_import_tako_cli,
             commands::tako_login,
             commands::tako_apply_key,
+            commands::tako_list_models,
             commands::tako_usage,
             commands::get_providers,
             commands::get_current_provider,

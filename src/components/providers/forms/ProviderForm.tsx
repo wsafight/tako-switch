@@ -2313,6 +2313,7 @@ function ProviderFormFull({
                 onTestConfigChange={setTestConfig}
                 onPricingConfigChange={setPricingConfig}
                 isTako={providerId === "tako-builtin"}
+                takoApiKey={apiKey}
               />
             )}
 
