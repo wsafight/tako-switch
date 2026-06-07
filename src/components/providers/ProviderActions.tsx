@@ -40,6 +40,8 @@ interface ProviderActionsProps {
   isOfficialBlockedByProxy?: boolean;
   // Hermes v12+ providers: dict overlay — edit/delete must go through Web UI
   isReadOnly?: boolean;
+  // Tako 内置 provider：完全锁死，不可删除
+  isUndeletable?: boolean;
   // OpenClaw: default model
   isDefaultModel?: boolean;
   onSetAsDefault?: () => void;
@@ -66,6 +68,7 @@ export function ProviderActions({
   onToggleFailover,
   isOfficialBlockedByProxy = false,
   isReadOnly = false,
+  isUndeletable = false,
   // OpenClaw: default model
   isDefaultModel = false,
   onSetAsDefault,
@@ -330,19 +333,22 @@ export function ProviderActions({
           </Button>
         )}
 
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={canDelete ? onDelete : undefined}
-          title={isReadOnly ? readOnlyHint : t("common.delete")}
-          className={cn(
-            iconButtonClass,
-            canDelete && "hover:text-red-500 dark:hover:text-red-400",
-            !canDelete && "opacity-40 cursor-not-allowed text-muted-foreground",
-          )}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!isUndeletable && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={canDelete ? onDelete : undefined}
+            title={isReadOnly ? readOnlyHint : t("common.delete")}
+            className={cn(
+              iconButtonClass,
+              canDelete && "hover:text-red-500 dark:hover:text-red-400",
+              !canDelete &&
+                "opacity-40 cursor-not-allowed text-muted-foreground",
+            )}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

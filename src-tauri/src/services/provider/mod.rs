@@ -1113,6 +1113,37 @@ base_url = "http://localhost:8080"
             );
         });
     }
+
+    /// Tako 内置 provider 完全锁死：用户删除入口必须拒绝，且 provider 仍在库中。
+    /// 关联：Tako 整合（2026-06）删除保护边界不变量。
+    #[test]
+    #[serial]
+    fn test_tako_builtin_provider_is_undeletable() {
+        with_test_home(|state, _home| {
+            let mut p = openclaw_provider(crate::database::TAKO_PROVIDER_ID);
+            p.name = "Tako".to_string();
+            state
+                .db
+                .save_provider("claude", &p)
+                .expect("seed tako provider");
+
+            let result = ProviderService::delete(
+                state,
+                AppType::Claude,
+                crate::database::TAKO_PROVIDER_ID,
+            );
+            assert!(result.is_err(), "deleting Tako builtin must be rejected");
+
+            let still_there = state
+                .db
+                .get_provider_by_id(crate::database::TAKO_PROVIDER_ID, "claude")
+                .expect("query after blocked delete");
+            assert!(
+                still_there.is_some(),
+                "Tako builtin must remain after blocked delete"
+            );
+        });
+    }
 }
 
 impl ProviderService {
@@ -1436,6 +1467,13 @@ impl ProviderService {
     /// 同时检查本地 settings 和数据库的当前供应商，防止删除任一端正在使用的供应商。
     /// 对于累加模式应用（OpenCode, OpenClaw），可以随时删除任意供应商，同时从 live 配置中移除。
     pub fn delete(state: &AppState, app_type: AppType, id: &str) -> Result<(), AppError> {
+        // Tako 内置 provider 完全锁死，禁止用户删除（所有应用类型通用）。
+        if id == crate::database::TAKO_PROVIDER_ID {
+            return Err(AppError::InvalidInput(
+                "Tako 是内置服务商，无法删除".to_string(),
+            ));
+        }
+
         // Additive mode apps - no current provider concept
         if app_type.is_additive_mode() {
             // Single DB read shared across all additive-mode sub-paths below.
