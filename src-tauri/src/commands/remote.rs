@@ -73,31 +73,76 @@ fn no_window(cmd: &mut Command) {
     }
 }
 
-/// Is the tako-remote CLI installed and on PATH? Returns version if so.
+/// Is the tako-remote CLI installed? Detect by locating the binary on PATH and
+/// reading the package.json version — WITHOUT executing it. Running the CLI
+/// (even `--version`) makes the happy fork drop into an interactive Ink auth
+/// prompt when unauthenticated, which crashes with "Raw mode is not supported"
+/// and pollutes stdout. Never spawn tako-remote from a detection path.
 #[tauri::command]
 pub async fn remote_status() -> Result<RemoteStatus, String> {
-    let mut cmd = Command::new(REMOTE_BIN);
-    cmd.arg("--version").stdout(Stdio::piped()).stderr(Stdio::null());
-    no_window(&mut cmd);
+    let bin = which_remote_bin();
+    let installed = bin.is_some();
+    let version = bin.as_ref().and_then(|p| remote_version_from_pkg(p));
+    let running = if installed { is_daemon_running().await } else { false };
+    log::info!(
+        "[remote] status: installed={installed} running={running} version={version:?} bin={bin:?}"
+    );
+    Ok(RemoteStatus { installed, running, version })
+}
 
-    match cmd.output().await {
-        Ok(out) if out.status.success() => {
-            let version = String::from_utf8_lossy(&out.stdout).trim().to_string();
-            Ok(RemoteStatus {
-                installed: true,
-                running: is_daemon_running().await,
-                version: if version.is_empty() { None } else { Some(version) },
-            })
+/// Locate the `tako-remote` executable on PATH (like `which`), without running it.
+fn which_remote_bin() -> Option<std::path::PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    for dir in std::env::split_paths(&path) {
+        let candidate = dir.join(REMOTE_BIN);
+        if candidate.exists() {
+            return Some(candidate);
         }
-        _ => Ok(RemoteStatus { installed: false, running: false, version: None }),
     }
+    None
+}
+
+/// Read the installed package version from the npm global package.json,
+/// resolving the bin symlink to find the package root. No CLI execution.
+fn remote_version_from_pkg(bin: &std::path::Path) -> Option<String> {
+    let resolved = std::fs::canonicalize(bin).ok()?;
+    let mut dir = resolved.parent();
+    while let Some(d) = dir {
+        let pkg = d.join("package.json");
+        if pkg.exists() {
+            let text = std::fs::read_to_string(&pkg).ok()?;
+            let json: serde_json::Value = serde_json::from_str(&text).ok()?;
+            if json.get("name").and_then(|n| n.as_str()) == Some("tako-remote") {
+                return json.get("version").and_then(|v| v.as_str()).map(String::from);
+            }
+        }
+        dir = d.parent();
+    }
+    None
 }
 
 async fn is_daemon_running() -> bool {
-    let mut cmd = Command::new(REMOTE_BIN);
-    cmd.args(["daemon", "status"]).stdout(Stdio::null()).stderr(Stdio::null());
-    no_window(&mut cmd);
-    matches!(cmd.status().await, Ok(s) if s.success())
+    let state_file = happy_home_dir().join("daemon.state.json");
+    let Ok(text) = std::fs::read_to_string(&state_file) else {
+        return false;
+    };
+    let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return false;
+    };
+    let Some(pid) = json.get("pid").and_then(|p| p.as_i64()) else {
+        return false;
+    };
+    pid_alive(pid)
+}
+
+#[cfg(unix)]
+fn pid_alive(pid: i64) -> bool {
+    unsafe { libc::kill(pid as libc::pid_t, 0) == 0 }
+}
+
+#[cfg(not(unix))]
+fn pid_alive(_pid: i64) -> bool {
+    false
 }
 
 /// Derive a STABLE 32-byte happy account secret from the Tako cr_ key, so one
