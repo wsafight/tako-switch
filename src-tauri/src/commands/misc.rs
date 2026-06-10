@@ -2964,8 +2964,7 @@ fn launch_windows_terminal(
     let bat_file = temp_dir.join(format!("cc_switch_claude_{}.bat", std::process::id()));
     let config_path_for_batch = escape_windows_batch_value(&config_file.to_string_lossy());
     let cwd_command = build_windows_cwd_command(cwd);
-    let launch_body =
-        build_windows_launch_body(app_type, &config_file.to_string_lossy(), env_vars);
+    let launch_body = build_windows_launch_body(app_type, &config_file.to_string_lossy(), env_vars);
 
     let content = format!(
         "@echo off
@@ -3047,10 +3046,15 @@ fn build_unix_launch_body(
             for (k, v) in env_vars {
                 body.push_str(&format!("export {k}={}\n", shell_single_quote(v)));
             }
-            body.push_str(&format!("echo \"Launching {cli} with Tako provider config…\"\n{cli}\n"));
+            body.push_str(&format!(
+                "echo \"Launching {cli} with Tako provider config…\"\n{cli}\n"
+            ));
             body
         }
-        _ => format!("echo \"Unsupported app for launch: {}\"\n", app_type.as_str()),
+        _ => format!(
+            "echo \"Unsupported app for launch: {}\"\n",
+            app_type.as_str()
+        ),
     }
 }
 

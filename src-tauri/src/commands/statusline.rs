@@ -1,5 +1,7 @@
 fn claude_settings_path() -> std::path::PathBuf {
-    crate::config::get_home_dir().join(".claude").join("settings.json")
+    crate::config::get_home_dir()
+        .join(".claude")
+        .join("settings.json")
 }
 
 fn statusline_command() -> String {

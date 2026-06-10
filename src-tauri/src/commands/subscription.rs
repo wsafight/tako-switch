@@ -72,15 +72,27 @@ async fn tako_quota_if_current(
     if current != TAKO_PROVIDER_ID {
         return None;
     }
-    let provider = state.db.get_provider_by_id(TAKO_PROVIDER_ID, tool).ok().flatten()?;
+    let provider = state
+        .db
+        .get_provider_by_id(TAKO_PROVIDER_ID, tool)
+        .ok()
+        .flatten()?;
     let cfg = &provider.settings_config;
     // Pull the cr_ key from whichever auth field this app uses.
     let key = cfg
         .get("env")
         .and_then(|e| e.get("ANTHROPIC_AUTH_TOKEN"))
         .and_then(|v| v.as_str())
-        .or_else(|| cfg.get("auth").and_then(|a| a.get("OPENAI_API_KEY")).and_then(|v| v.as_str()))
-        .or_else(|| cfg.get("env").and_then(|e| e.get("GEMINI_API_KEY")).and_then(|v| v.as_str()))
+        .or_else(|| {
+            cfg.get("auth")
+                .and_then(|a| a.get("OPENAI_API_KEY"))
+                .and_then(|v| v.as_str())
+        })
+        .or_else(|| {
+            cfg.get("env")
+                .and_then(|e| e.get("GEMINI_API_KEY"))
+                .and_then(|v| v.as_str())
+        })
         .filter(|s| !s.is_empty())?;
 
     let usage = crate::commands::tako_usage(key.to_string()).await.ok()?;

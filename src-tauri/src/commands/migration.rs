@@ -44,8 +44,8 @@ pub async fn migration_detect() -> Result<MigrationDetect, String> {
 
     // cc-switch: only offer if old dir has real data AND we haven't imported.
     let ccswitch_dir = home().join(".cc-switch");
-    let has_ccswitch_data = ccswitch_dir.join("cc-switch.db").exists()
-        || ccswitch_dir.join("config.json").exists();
+    let has_ccswitch_data =
+        ccswitch_dir.join("cc-switch.db").exists() || ccswitch_dir.join("config.json").exists();
     let already_imported_cc = marker_contains(&marker, "ccswitch");
     out.ccswitch_available = has_ccswitch_data && !already_imported_cc;
 
@@ -96,14 +96,16 @@ pub async fn migration_import_ccswitch() -> Result<bool, String> {
     fs::create_dir_all(&dst).map_err(|e| format!("Failed to create target dir: {e}"))?;
 
     // Copy config.json and the database, renaming the db to the Tako name.
-    for (from_name, to_name) in [("config.json", "config.json"), ("cc-switch.db", "tako-switch.db")] {
+    for (from_name, to_name) in [
+        ("config.json", "config.json"),
+        ("cc-switch.db", "tako-switch.db"),
+    ] {
         let from = src.join(from_name);
         if from.exists() {
             let to = dst.join(to_name);
             // Don't clobber an existing Tako file the user already created.
             if !to.exists() {
-                fs::copy(&from, &to)
-                    .map_err(|e| format!("Failed to copy {from_name}: {e}"))?;
+                fs::copy(&from, &to).map_err(|e| format!("Failed to copy {from_name}: {e}"))?;
             }
         }
     }
@@ -152,12 +154,10 @@ pub(crate) fn write_key_into_tako_providers(state: &AppState, api_key: &str) -> 
                         serde_json::Value::String("https://tako.shiroha.tech".to_string());
                 }
                 "codex" => {
-                    cfg["auth"]["OPENAI_API_KEY"] =
-                        serde_json::Value::String(api_key.to_string());
+                    cfg["auth"]["OPENAI_API_KEY"] = serde_json::Value::String(api_key.to_string());
                 }
                 "gemini" => {
-                    cfg["env"]["GEMINI_API_KEY"] =
-                        serde_json::Value::String(api_key.to_string());
+                    cfg["env"]["GEMINI_API_KEY"] = serde_json::Value::String(api_key.to_string());
                 }
                 _ => {}
             }
@@ -331,7 +331,11 @@ pub async fn tako_usage(apiKey: String) -> Result<TakoUsage, String> {
         .and_then(|d| d.get("id"))
         .and_then(|v| v.as_str());
     let Some(api_id) = api_id else {
-        return Ok(TakoUsage { ok: false, error: Some("Invalid key".into()), ..Default::default() });
+        return Ok(TakoUsage {
+            ok: false,
+            error: Some("Invalid key".into()),
+            ..Default::default()
+        });
     };
 
     // 2. apiId -> quota
@@ -347,7 +351,9 @@ pub async fn tako_usage(apiKey: String) -> Result<TakoUsage, String> {
     let usage = q.get("usage");
     let plan = q.get("plan");
     let f = |o: Option<&serde_json::Value>, k: &str| {
-        o.and_then(|v| v.get(k)).and_then(|v| v.as_f64()).unwrap_or(0.0)
+        o.and_then(|v| v.get(k))
+            .and_then(|v| v.as_f64())
+            .unwrap_or(0.0)
     };
 
     Ok(TakoUsage {

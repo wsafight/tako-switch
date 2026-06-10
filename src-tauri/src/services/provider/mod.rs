@@ -1127,11 +1127,8 @@ base_url = "http://localhost:8080"
                 .save_provider("claude", &p)
                 .expect("seed tako provider");
 
-            let result = ProviderService::delete(
-                state,
-                AppType::Claude,
-                crate::database::TAKO_PROVIDER_ID,
-            );
+            let result =
+                ProviderService::delete(state, AppType::Claude, crate::database::TAKO_PROVIDER_ID);
             assert!(result.is_err(), "deleting Tako builtin must be rejected");
 
             let still_there = state

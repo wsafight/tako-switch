@@ -688,9 +688,8 @@ impl Database {
                 .map_err(|e| AppError::Database(e.to_string()))?;
             }
             let settings_config: serde_json::Value =
-                serde_json::from_str(seed.settings_config_json).map_err(|e| {
-                    AppError::Database(format!("Tako seed JSON parse failed: {e}"))
-                })?;
+                serde_json::from_str(seed.settings_config_json)
+                    .map_err(|e| AppError::Database(format!("Tako seed JSON parse failed: {e}")))?;
             let mut provider = Provider::with_id(
                 seed.id.to_string(),
                 seed.name.to_string(),
